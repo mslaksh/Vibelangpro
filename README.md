@@ -50,8 +50,8 @@
 ### 📦 Variables
 
 ```
-bag name = "John"
-bag age = 21
+bag name = "Shanthosh"
+bag age = 24
 ```
 
 ### 🗣 Output
@@ -157,9 +157,3 @@ This project is open-source and free to use.
 Built with ❤️ by **Shanthosh Lakshman**
 
 ---
-
-If you want, I can also:
-
-* create a **GitHub repo description + tags**
-* design a **logo for VibeLang Pro**
-* or convert this into a **fancy README with badges + screenshots**
