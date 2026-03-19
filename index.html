@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>VibeLang Pro</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Fira+Code:400,500&display=swap" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" />
+    <style>
+        :root { 
+            --bg: #0f0f0f; --panel: #161616; --accent: #9c27b0; 
+            --secondary: #00e5ff; --text: #d1d1d1; --border: #2a2a2a; --error: #ff5252;
+            --debug-hl: rgba(0, 229, 255, 0.15);
+        }
+        * { box-sizing: border-box; }
+        body { margin: 0; background: var(--bg); color: var(--text); font-family: sans-serif; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        
+        /* App Header & Debug Slider */
+        .app-header { background: var(--panel); padding: 10px 15px; display: flex; align-items: center; border-bottom: 1px solid var(--border); justify-content: space-between; flex-shrink: 0; }
+        .brand { display: flex; align-items: center; gap: 8px; font-weight: bold; color: var(--secondary); font-size: 14px; }
+        .debug-ui { display: flex; align-items: center; gap: 8px; background: #000; padding: 4px 12px; border-radius: 20px; border: 1px solid var(--border); }
+        .debug-ui span { font-size: 9px; color: #666; font-weight: bold; }
+        #debugSpeed { width: 60px; accent-color: var(--secondary); cursor: pointer; }
+
+        /* Tabs */
+        .tab-bar { display: flex; background: var(--bg); padding: 5px 10px 0; gap: 4px; border-bottom: 1px solid var(--border); overflow-x: auto; flex-shrink: 0; scrollbar-width: none; align-items: flex-end; }
+        .tab { padding: 8px 12px; background: var(--panel); border-radius: 6px 6px 0 0; font-size: 12px; cursor: pointer; display: flex; align-items: center; gap: 8px; opacity: 0.6; white-space: nowrap; border: 1px solid transparent; border-bottom: none; }
+        .tab.active { opacity: 1; color: var(--secondary); background: var(--bg); border-color: var(--border); }
+        .close-tab { font-size: 14px; opacity: 0.5; transition: 0.2s; }
+        .close-tab:hover { color: var(--error); opacity: 1; }
+
+        /* Tools */
+        .zen-tools { display: flex; align-items: center; padding: 10px 15px; background: var(--bg); border-bottom: 1px solid var(--border); justify-content: space-between; flex-shrink: 0; }
+        .btn-group { display: flex; gap: 6px; }
+        .icon-btn { background: transparent; color: var(--text); border: none; cursor: pointer; padding: 6px; border-radius: 4px; display: flex; align-items: center; }
+        .icon-btn:hover { background: rgba(255,255,255,0.05); color: var(--secondary); }
+
+        .content { display: flex; flex: 1; overflow: hidden; flex-direction: column; }
+        @media (min-width: 850px) { .content { flex-direction: row; } }
+
+        /* Editor */
+        .editor-view { flex: 1; position: relative; display: flex; background: var(--bg); overflow: hidden; min-height: 0; }
+        .line-numbers { width: 45px; text-align: right; padding: 20px 8px; color: #444; font-family: 'Fira Code', monospace; font-size: 13px; line-height: 1.6; border-right: 1px solid var(--border); overflow: hidden; user-select: none; flex-shrink: 0; }
+        #debug-highlighter { position: absolute; left: 45px; right: 0; height: 22.4px; background: var(--debug-hl); border-left: 3px solid var(--secondary); display: none; z-index: 1; pointer-events: none; }
+        
+        .editor-wrapper { flex: 1; display: flex; flex-direction: column; position: relative; overflow: hidden; }
+        textarea { flex: 1; background: transparent; color: #9cdcfe; border: none; padding: 20px 10px; font-family: 'Fira Code', monospace; font-size: 14px; line-height: 1.6; outline: none; resize: none; z-index: 2; width: 100%; white-space: pre; overflow: auto; }
+        
+        .line-ruler { background: var(--panel); border-top: 1px solid var(--border); padding: 6px 15px; font-family: 'Fira Code', monospace; font-size: 11px; color: #666; display: flex; gap: 20px; flex-shrink: 0; justify-content: space-between; }
+
+        /* Bottom/Side Panel */
+        .side-panel { width: 100%; height: 45%; background: var(--panel); display: flex; flex-direction: column; border-top: 2px solid var(--border); flex-shrink: 0; }
+        @media (min-width: 850px) { .side-panel { width: 340px; height: auto; border-top: none; border-left: 1px solid var(--border); } }
+
+        .panel-nav { display: flex; background: #111; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+        .p-nav-btn { flex: 1; padding: 12px; font-size: 10px; text-align: center; color: #555; cursor: pointer; font-weight: bold; border-bottom: 2px solid transparent; display: flex; align-items: center; justify-content: center; gap: 6px; }
+        .p-nav-btn.active { color: var(--secondary); border-bottom-color: var(--secondary); background: rgba(255,255,255,0.05); }
+
+        .panel-body { flex: 1; overflow-y: auto; padding: 12px; position: relative; }
+        .panel-section { display: none; height: 100%; flex-direction: column; }
+        .panel-section.active { display: flex; }
+
+        .console, .input-log, .bag-monitor { background: #000; border-radius: 8px; padding: 12px; font-family: 'Fira Code', monospace; font-size: 12px; border: 1px solid var(--border); flex: 1; overflow-y: auto; }
+        .console { color: #4af626; white-space: pre-wrap; }
+        .btn-pill { border: none; padding: 8px 18px; border-radius: 20px; font-weight: bold; cursor: pointer; font-size: 12px; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+    </style>
+</head>
+<body oncontextmenu="return false;">
+
+<div class="app-header">
+    <div class="brand"><span class="material-icons">terminal</span> VibeLang Pro</div>
+    <div class="debug-ui">
+        <span>SLOW</span>
+        <input type="range" id="debugSpeed" min="50" max="1000" value="200">
+        <span>FAST</span>
+    </div>
+</div>
+
+<div class="tab-bar" id="tabBar">
+    <div style="padding: 8px; cursor: pointer; display: flex;" onclick="createNewTab()"><span class="material-icons">add</span></div>
+</div>
+
+<div class="zen-tools">
+    <div class="btn-group">
+        <button class="icon-btn" onclick="undo()" title="Undo"><span class="material-icons">undo</span></button>
+        <button class="icon-btn" onclick="redo()" title="Redo"><span class="material-icons">redo</span></button>
+        <button class="icon-btn" onclick="beautify()" title="Beautify"><span class="material-icons">auto_fix_high</span></button>
+        <button class="icon-btn" onclick="document.getElementById('fileUp').click()" title="Upload"><span class="material-icons">file_upload</span></button>
+        <button class="icon-btn" onclick="saveFile()" title="Download"><span class="material-icons">file_download</span></button>
+        <input type="file" id="fileUp" hidden onchange="handleUpload(event)">
+    </div>
+    <button class="btn-pill" style="background: var(--accent); color: white;" onclick="runCode()">
+        <span class="material-icons">play_circle</span> RUN
+    </button>
+</div>
+
+<div class="content">
+    <div class="editor-view">
+        <div id="lineNumbers" class="line-numbers">1</div>
+        <div id="debug-highlighter"></div>
+        <div class="editor-wrapper">
+            <textarea id="editor" spellcheck="false" oninput="onInput()" onscroll="syncScroll()" onclick="updateRuler()" onkeyup="updateRuler()"></textarea>
+            <div class="line-ruler">
+                <div>LN <b id="currLine">1</b> | COL <b id="currCol">1</b></div>
+                <div id="save-status" style="color:var(--secondary); font-weight:bold; opacity:0; transition:0.3s;">SAVED</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="side-panel">
+        <div class="panel-nav">
+            <div class="p-nav-btn active" onclick="switchPanelTab('console')">CONSOLE <span class="material-icons" onclick="copyConsole(event)" style="font-size:12px;">content_copy</span></div>
+            <div class="p-nav-btn" onclick="switchPanelTab('input')">LOG</div>
+            <div class="p-nav-btn" onclick="switchPanelTab('bags')">BAGS</div>
+        </div>
+        <div class="panel-body">
+            <div id="errorBox" style="display:none; color:var(--error); border:1px solid var(--error); padding:10px; border-radius:6px; margin-bottom:10px; font-size:12px;"></div>
+            <div id="sec-console" class="panel-section active"><div class="console" id="consoleOut">Ready...</div></div>
+            <div id="sec-input" class="panel-section"><div class="input-log" id="inputLog" style="color:#888; background:#000; padding:12px; border-radius:8px; border:1px solid var(--border);">Waiting...</div></div>
+            <div id="sec-bags" class="panel-section"><div id="bagMonitor" class="bag-monitor" style="color:var(--secondary); background:#000; padding:12px; border-radius:8px; border:1px solid var(--border);">No bags.</div></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const editor = document.getElementById('editor');
+    const consoleOut = document.getElementById('consoleOut');
+    const inputLog = document.getElementById('inputLog');
+    const bagMonitor = document.getElementById('bagMonitor');
+    const errorBox = document.getElementById('errorBox');
+    const highlighter = document.getElementById('debug-highlighter');
+    const speedSlider = document.getElementById('debugSpeed');
+    const saveStatus = document.getElementById('save-status');
+
+    let tabs = JSON.parse(localStorage.getItem('vbl_tabs')) || [{id:Date.now(), name:'main.vbl', content:'bag name = get(What is your Name?)\nvibe(Hi #name, Welcome to Vibelang!)'}];
+    let activeId = tabs[0].id;
+    let vars = {};
+    let isRunning = false;
+    let historyStack = {}; 
+
+    function syncScroll() { document.getElementById('lineNumbers').scrollTop = editor.scrollTop; }
+
+    function switchPanelTab(target) {
+        document.querySelectorAll('.p-nav-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.panel-section').forEach(s => s.classList.remove('active'));
+        event.currentTarget.classList.add('active');
+        document.getElementById('sec-' + target).classList.add('active');
+    }
+
+    function updateRuler() {
+        const text = editor.value;
+        const pos = editor.selectionStart;
+        const lines = text.substr(0, pos).split("\n");
+        document.getElementById('currLine').innerText = lines.length;
+        document.getElementById('currCol').innerText = lines[lines.length - 1].length + 1;
+    }
+
+    function copyConsole(e) {
+        e.stopPropagation();
+        navigator.clipboard.writeText(consoleOut.innerText);
+        saveStatus.innerText = "COPIED";
+        saveStatus.style.opacity = 1;
+        setTimeout(() => { saveStatus.style.opacity = 0; saveStatus.innerText = "SAVED"; }, 1000);
+    }
+
+    function beautify() {
+        let lines = editor.value.split('\n');
+        let clean = lines.map(l => {
+            let t = l.trim();
+            if (t.startsWith("bag ") && t.includes('=')) {
+                let parts = t.split('=');
+                return parts[0].trim() + ' = ' + parts[1].trim();
+            }
+            return t;
+        }).filter((l, i, a) => !(l === "" && a[i-1] === "")).join('\n');
+        editor.value = clean;
+        onInput();
+    }
+
+    function evaluate(expr) {
+        if (expr.includes("get(")) {
+            let match = expr.match(/get\(([^,)]+)(?:,\s*([^)]+))?\)/);
+            let msg = match[1].replace(/['"]/g, '').replace(/#(\w+)/g, (_, v) => vars[v] || 'null');
+            let type = match[2] ? match[2].trim().toLowerCase() : 'string';
+            let res = prompt(msg);
+            if (res === null) throw new Error("Canceled.");
+            if (type === 'number' && isNaN(res)) throw new Error("Expected Number!");
+            let final = type === 'number' ? Number(res) : res;
+            inputLog.innerHTML += `<div>> ${msg}: ${final}</div>`;
+            return final;
+        }
+        let cleaned = expr.replace(/#(\w+)/g, (_, v) => (v in vars) ? JSON.stringify(vars[v]) : "null");
+        try { return new Function(`return ${cleaned}`)(); } catch (e) { return cleaned.replace(/^"|"$/g, ''); }
+    }
+
+    async function processBlock(allLines, start, end) {
+        for (let i = start; i < end; i++) {
+            let line = allLines[i].trim();
+            if (!line || line.startsWith("///") || line === "end" || line === "nah") continue;
+
+            highlighter.style.top = (20 + (i * 22.4) - editor.scrollTop) + 'px';
+            highlighter.style.display = 'block';
+            await new Promise(r => setTimeout(r, 1050 - speedSlider.value));
+
+            if (line.startsWith("bag ")) {
+                let eq = line.indexOf("=");
+                vars[line.slice(4, eq).trim()] = evaluate(line.slice(eq + 1).trim());
+                updateBagUI();
+            } else if (line.startsWith("vibe(")) {
+                consoleOut.innerText += `> ${evaluate(line.slice(5, -1))}\n`;
+            } else if (line.startsWith("maybe ")) {
+                let thenIdx = line.indexOf("then");
+                let cond = evaluate(line.slice(6, thenIdx).trim());
+                let mid = findMid(allLines, i), closing = findClosing(allLines, i);
+                if (cond) await processBlock(allLines, i + 1, mid !== -1 ? mid : closing);
+                else if (mid !== -1) await processBlock(allLines, mid + 1, closing);
+                i = closing;
+            } else if (line.startsWith("spin ")) {
+                let m = line.match(/spin (\w+) = (\d+) to (\d+)/), closing = findClosing(allLines, i);
+                if(m) {
+                    for (let v = parseInt(m[2]); v <= parseInt(m[3]); v++) {
+                        vars[m[1]] = v; updateBagUI();
+                        await processBlock(allLines, i + 1, closing);
+                    }
+                    i = closing;
+                }
+            }
+        }
+    }
+
+    function findClosing(lines, start) {
+        let depth = 0;
+        for (let i = start; i < lines.length; i++) {
+            let l = lines[i].trim();
+            if (/^(maybe|spin)\b/.test(l)) depth++;
+            if (l === "end") depth--;
+            if (depth === 0) return i;
+        }
+        return lines.length;
+    }
+
+    function findMid(lines, start) {
+        let depth = 0;
+        for (let i = start; i < lines.length; i++) {
+            let l = lines[i].trim();
+            if (/^(maybe|spin)\b/.test(l)) depth++;
+            if (l === "end") depth--;
+            if (depth === 1 && l === "nah") return i;
+            if (depth === 0) return -1;
+        }
+        return -1;
+    }
+
+    async function runCode() {
+        if (isRunning) return;
+        isRunning = true;
+        consoleOut.innerText = ""; inputLog.innerHTML = ""; errorBox.style.display = "none"; vars = {};
+        try { await processBlock(editor.value.split('\n'), 0, editor.value.split('\n').length); } 
+        catch (e) { errorBox.innerText = e.message; errorBox.style.display = "block"; switchPanelTab('console'); }
+        highlighter.style.display = 'none';
+        isRunning = false;
+    }
+
+    function onInput() {
+        const tab = tabs.find(t => t.id === activeId);
+        if(tab) tab.content = editor.value;
+        localStorage.setItem('vbl_tabs', JSON.stringify(tabs));
+        saveStatus.style.opacity = 1;
+        setTimeout(() => saveStatus.style.opacity = 0, 1000);
+        
+        if (!historyStack[activeId]) historyStack[activeId] = { past: [], future: [] };
+        historyStack[activeId].past.push(editor.value);
+        if (historyStack[activeId].past.length > 30) historyStack[activeId].past.shift();
+        updateUI();
+    }
+
+    function undo() {
+        const h = historyStack[activeId];
+        if (h && h.past.length > 1) {
+            h.future.push(h.past.pop());
+            editor.value = h.past[h.past.length - 1];
+            updateUI();
+        }
+    }
+
+    function redo() {
+        const h = historyStack[activeId];
+        if (h && h.future.length > 0) {
+            const val = h.future.pop();
+            h.past.push(val);
+            editor.value = val;
+            updateUI();
+        }
+    }
+
+    function switchTab(id) {
+        activeId = id;
+        const tab = tabs.find(t => t.id === id);
+        editor.value = tab.content;
+        if (!historyStack[id]) historyStack[id] = { past: [editor.value], future: [] };
+        renderTabs();
+        updateUI();
+    }
+
+    function closeTab(id, event) {
+        event.stopPropagation();
+        if (tabs.length === 1) return createNewTab();
+        const index = tabs.findIndex(t => t.id === id);
+        tabs.splice(index, 1);
+        localStorage.setItem('vbl_tabs', JSON.stringify(tabs));
+        switchTab(tabs[Math.max(0, index - 1)].id);
+    }
+
+    function renderTabs() {
+        const bar = document.getElementById('tabBar');
+        bar.querySelectorAll('.tab').forEach(t => t.remove());
+        tabs.forEach(t => {
+            const el = document.createElement('div');
+            el.className = `tab ${t.id === activeId ? 'active' : ''}`;
+            el.innerHTML = `
+                <span onclick="switchTab(${t.id})">${t.name}</span>
+                <span class="material-icons close-tab" onclick="closeTab(${t.id}, event)">close</span>
+            `;
+            bar.insertBefore(el, bar.lastChild);
+        });
+    }
+
+    function createNewTab() {
+        const id = Date.now();
+        tabs.push({ id, name: `vibe_${tabs.length + 1}.vbl`, content: '' });
+        switchTab(id);
+    }
+
+    function updateUI() {
+        const count = editor.value.split('\n').length;
+        let numbers = "";
+        for(let i=1; i<=count; i++) numbers += i + "<br>";
+        document.getElementById('lineNumbers').innerHTML = numbers;
+        updateRuler();
+        syncScroll();
+    }
+
+    function updateBagUI() { 
+        bagMonitor.innerHTML = Object.entries(vars).map(([k,v]) => `<div>#${k} = ${v}</div>`).join(""); 
+    }
+
+    function saveFile() {
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(new Blob([editor.value]));
+        a.download = tabs.find(t => t.id === activeId).name;
+        a.click();
+    }
+
+    function handleUpload(e) {
+        const file = e.target.files[0];
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+            tabs.push({ id: Date.now(), name: file.name, content: ev.target.result });
+            switchTab(tabs[tabs.length-1].id);
+        };
+        reader.readAsText(file);
+    }
+
+    switchTab(activeId);
+</script>
+</body>
+</html>
