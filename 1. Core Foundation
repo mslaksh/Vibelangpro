@@ -1,0 +1,64 @@
+## 🌌 VibeLang Master Tutorial: 1. The Core Foundation
+
+This section covers the essential building blocks of **VibeLang Pro**. Understanding these basics is critical before moving on to complex logic like loops or conditionals.
+
+---
+
+### 1. What is VibeLang?
+VibeLang is an **interpreted language**. This means the code is executed line-by-line by a program (the interpreter) rather than being compiled into a permanent file first. In VibeLang Pro, this happens directly in your browser using JavaScript.
+
+### 2. The IDE Layout
+The Pro editor is divided into three main functional areas:
+* **Editor (Left/Top)**: Where you write your `.vbl` code.
+* **Console (Right/Bottom)**: Where your `vibe()` outputs appear.
+* **Bag Monitor**: A live tracker that shows exactly what is stored in your variables at any given moment.
+
+### 3. Case Sensitivity
+VibeLang is strictly case-sensitive. 
+* `bag score = 10` is valid.
+* `Bag score = 10` will result in an error because the interpreter only looks for lowercase `bag`.
+
+### 4. Whitespace and Indentation
+Unlike Python, VibeLang does not use indentation to define blocks. However, using spaces or tabs makes your code readable. The **Beautify** tool (✨) can automatically clean up your spacing for you.
+
+### 5. The `bag` Keyword
+The `bag` keyword is used for **Variable Declaration**. It tells the computer to reserve a spot in memory to store information.
+> **Example**: `bag playerName = "Nova"`
+
+### 6. Naming Conventions
+Bag names should be descriptive. 
+* **Allowed**: Letters, numbers, and underscores (e.g., `user_1`, `highScore`).
+* **Avoid**: Starting names with numbers or using special symbols like `!`, `@`, or `%`.
+
+### 7. Primitive: Strings
+Strings are sequences of characters used for text. In VibeLang, strings are usually wrapped in quotes or handled as raw text in certain commands.
+* `bag message = "Hello"`
+
+### 8. Primitive: Numbers
+Numbers can be integers (whole numbers) or decimals (floats). VibeLang treats them as mathematical values, allowing you to perform calculations on them.
+* `bag pi = 3.14`
+
+### 9. Comments (`///`)
+Anything following `///` on a line is a comment. The interpreter completely ignores these lines. Use them to explain what your code is doing.
+* `/// This bag stores the user's score`
+
+### 10. Execution Flow
+VibeLang executes from top to bottom. You can see this visually in the IDE as the **highlighter** moves down the lines at the speed set by your **Debug Slider**.
+
+---
+
+### 🧪 Foundation Practice Script
+Copy this into your editor to see these 10 concepts in action:
+
+```vb
+/// Topic 9: This is a comment
+/// Topic 5 & 8: Declaring a number bag
+bag version = 1.0
+
+/// Topic 7: Declaring a string bag
+bag status = "Online"
+
+/// Topic 10: Execution flows to this vibe next
+vibe(VibeLang Pro is #status)
+vibe(Running version #version)
+```
