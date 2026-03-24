@@ -1,0 +1,36 @@
+/// 1. Get Readings
+bag current = get("Enter Current Reading:", number)
+bag previous = get("Enter Previous Reading:", number)
+
+/// 2. Calculate Usage
+bag units = #current - #previous
+vibe(Total Units Consumed: #units)
+
+/// 3. Initialize Bill
+bag totalBill = 0
+
+/// 4. TANGEDCO Logic
+maybe #units <= 100 then
+    bag totalBill = 0
+    vibe(Status: You are in the FREE tier)
+nah
+    /// Logic for consumption above 100 units
+    bag billable = #units - 100
+    
+    maybe #units <= 200 then
+        bag totalBill = #billable * 2.25
+    nah
+        maybe #units <= 400 then
+            bag totalBill = #billable * 4.50
+        nah
+            maybe #units <= 500 then
+                bag totalBill = #billable * 6.00
+            nah
+                bag totalBill = #billable * 8.00
+            end
+        end
+    end
+end
+
+vibe(Net Amount Payable: Rs. #totalBill)
+vibe(Please pay before the due date!)
